@@ -12,6 +12,7 @@ public class CPHInline
             // Set your ReplayBuffer FilePaths Here. Remember to double backslash for each directory.
             string yourReplayPath = "C:\\";
             string yourOutputPath = "C:\\Clips\\";
+			string yourFileFormat = "mkv"; // Set this to your chosen output format. Remember, you can remux MKV's to MP4's directly via OBS.
 
             // Variables used in the routine
             string fileNameInput = args["rawInput"].ToString(); // Name of the clip, which is used as the the new filename.
@@ -41,14 +42,14 @@ public class CPHInline
             // Scan the initial folder where the clip is saved for the newest file created - presumably the clip
             var clipBackups = new DirectoryInfo(@"" + yourReplayPath + "");
             // Filter by MKV files - or change to whatever file output format you have your replay buffer configured to.
-            var clipFile = clipBackups.GetFiles("*.mkv").OrderByDescending(p => p.CreationTime).FirstOrDefault();
+            var clipFile = clipBackups.GetFiles("*." + yourFileFormat).OrderByDescending(p => p.CreationTime).FirstOrDefault();
             // If no file found, quit out.
             if (clipFile == null)
                 return true; //
             // Grab the file name by the Windows Path
             var clipPath = clipFile.FullName;
             // Rename the file
-            string newFileName = @"" + yourOutputPath + fileNameInput + " (clipped by " + clipUser + ").mkv";
+            string newFileName = @"" + yourOutputPath + fileNameInput + " (clipped by " + clipUser + ")." + yourFileFormat;
             System.IO.File.Move(clipPath, newFileName);
             // Send an alert to the YouTube chat that the clip has been successfully saved by the user.
             string msgOutput = "🎬" + args["userName"].ToString() + " has just saved a clip titled " + fileNameInput + "!";
@@ -70,7 +71,7 @@ public class CPHInline
             var platform = args["eventSource"].ToString();
             string twitch = "twitch";
             string youtube = "youtube";
-            var errMsg = "⚠" + args["userName"].ToString() + ", something went wrong and no clip was created. Perhaps the streamer hasn't enabled OBS replay buffer.";
+            var errMsg = "⚠" + args["userName"].ToString() + ", something went wrong and no clip was created. Perhaps the streamer hasn't enabled replay buffer.";
             if (platform == youtube) 
             {
                 CPH.SendYouTubeMessage(errMsg);
