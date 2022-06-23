@@ -5,36 +5,26 @@ using System.Linq;
 
 public class CPHInline
 {
-	public bool Execute()
-	{
-        try // Attempts the clipping
+    public bool Execute()
+    {
+        try
         {
-            // Set your ReplayBuffer FilePaths Here. Remember to double backslash for each directory.
-            string yourReplayPath = "C:\\";
-            string yourOutputPath = "C:\\Clips\\";
-			string yourFileFormat = "mkv"; // Set this to your chosen output format. Remember, you can remux MKV's to MP4's directly via OBS.
-
+            string yourReplayPath = "V:\\";
+            string yourOutputPath = "V:\\Clips\\";
+            string yourFileFormat = "mkv"; // Set this to your chosen output format. Remember, you can remux MKV's to MP4's directly via OBS.
             // Variables used in the routine
             string fileNameInput = args["rawInput"].ToString(); // Name of the clip, which is used as the the new filename.
             string clipUser = args["userName"].ToString(); // Triggering User for attribution
-            var platform = args["eventSource"].ToString();
-            string twitch = "twitch";
-            string youtube = "youtube";
-
+            // Set your ReplayBuffer FilePaths Here. Remember to double backslash for each directory.
             // If there's no input from the chatter, it won't save the clip.
             if (String.IsNullOrEmpty(fileNameInput))
             {
-                var errMsg = "⚠" + args["userName"].ToString() + ", you must specify a name for the clip. Your clip has not been saved.";
-                if (platform == youtube) {
-                    CPH.SendYouTubeMessage(errMsg);
-                    return true;
-                } 
-                else if(platform == twitch)
-                {
-                    CPH.SendMessage(errMsg);
-                    return true;
-                }
+                var errNoFn = "⚠" + args["userName"].ToString() + ", you must specify a name for the clip. Your clip has not been saved.";
+                CPH.SendYouTubeMessage(errNoFn);
+                CPH.SendMessage(errNoFn);
+                return true;
             }
+
             // The actual OBS Replay Buffer save event
             CPH.ObsReplayBufferSave();
             // Wait 2 seconds in case there's a delay of whatever reason
@@ -45,7 +35,10 @@ public class CPHInline
             var clipFile = clipBackups.GetFiles("*." + yourFileFormat).OrderByDescending(p => p.CreationTime).FirstOrDefault();
             // If no file found, quit out.
             if (clipFile == null)
+            {
                 return true; //
+            }
+
             // Grab the file name by the Windows Path
             var clipPath = clipFile.FullName;
             // Rename the file
@@ -53,36 +46,18 @@ public class CPHInline
             System.IO.File.Move(clipPath, newFileName);
             // Send an alert to the YouTube chat that the clip has been successfully saved by the user.
             string msgOutput = "🎬" + args["userName"].ToString() + " has just saved a clip titled " + fileNameInput + "!";
-            if (platform == youtube) 
-            {
-                CPH.SendYouTubeMessage(msgOutput);
-                return true;
-            } 
-            else if(platform == twitch)
-            {
-                CPH.SendMessage(msgOutput);
-                return true;
-            }
-            // Finish up.
+            CPH.SendYouTubeMessage(msgOutput);
+            CPH.SendMessage(msgOutput);
             return true;
         }
-        catch // If something doesn't work as expected.
+        catch
         {
-            var platform = args["eventSource"].ToString();
-            string twitch = "twitch";
-            string youtube = "youtube";
-            var errMsg = "⚠" + args["userName"].ToString() + ", something went wrong and no clip was created. Perhaps the streamer hasn't enabled replay buffer.";
-            if (platform == youtube) 
-            {
-                CPH.SendYouTubeMessage(errMsg);
-                return true;
-            } 
-            else if(platform == twitch)
-            {
-                CPH.SendMessage(errMsg);
-                return true;
-            }
-            return false;
+            var errMsg = "⚠" + args["userName"].ToString() + ", something went wrong and no clip was created. Perhaps the streamer hasn't enabled replay buffer or a clip already exists with that name.";
+            CPH.SendYouTubeMessage(errMsg);
+            CPH.SendMessage(errMsg);
+            return true;
         }
-	}
+
+        return false;
+    }
 }
