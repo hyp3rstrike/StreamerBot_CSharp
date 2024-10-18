@@ -9,14 +9,14 @@ public class CPHInline
 {
     public bool Execute()
     {
-        // Call the main async logic and handle it synchronously in this Execute method
+        // Main function that handles posting to Bluesky in StreamerBot
         PostToBluesky().GetAwaiter().GetResult();
         return true;
     }
 
     private async Task PostToBluesky()
     {
-        // Define constants and retrieve arguments
+        // Constants and variables used in the message
         CPH.TryGetArg("game", out string currentGame);
         CPH.TryGetArg("targetUserName", out string twitchUser);
         CPH.TryGetArg("targetChannelTitle", out string streamTitle);
@@ -34,7 +34,7 @@ public class CPHInline
         {
             using (HttpClient client = new HttpClient())
             {
-                // 1. Resolve handle
+                // Used to check if the Bluesky username is valid
                 string handleUrl = $"{ResolveIdEndpoint}?handle={Uri.EscapeDataString(BlueSkyHandle)}";
                 HttpResponseMessage handleResponse = await client.GetAsync(handleUrl);
 
@@ -44,7 +44,7 @@ public class CPHInline
                     string DID = JObject.Parse(handleContent)["did"].ToString();
                     CPH.LogInfo($"DID: {DID}");
 
-                    // 2. Get Token
+                    // Automatically fetches an access token and refresh token
                     var payload = new
                     {
                         identifier = DID,
@@ -61,14 +61,14 @@ public class CPHInline
                         string TOKEN = JObject.Parse(tokenContent)["accessJwt"].ToString();
                         CPH.LogInfo($"Token: {TOKEN}");
 
-                        // 3. Publish a new post with a hyperlink
+                        // Create post content with link to the channel (EDIT THIS AS YOU SEE FIT)
                         string postText = "Testing API Posts via Streamer.bot\n\n" + streamTitle + "\n\n" + channelUrl;
 
-                        // Calculate byte indices for the hyperlink
+                        // Calculate byte indices for the hyperlink aka the start and end of the link (it's needed)
                         int byteStart = postText.IndexOf(channelUrl);
                         int byteEnd = byteStart + channelUrl.Length;
 
-                        // Construct the post payload using JObject to handle special characters
+                        // Construct the post as a JSON object to send to Bluesky
                         var postPayload = new JObject
                         {
                             ["collection"] = "app.bsky.feed.post",
@@ -76,8 +76,8 @@ public class CPHInline
                             ["record"] = new JObject
                             {
                                 ["text"] = postText,
-                                ["createdAt"] = DateTime.UtcNow.ToString("o"), // ISO 8601 format
-                                ["type"] = "app.bsky.feed.post", // Changed to 'type'
+                                ["createdAt"] = DateTime.UtcNow.ToString("o"), // ISO 8601 format - you can literally backdate it and it'll still post lol
+                                ["type"] = "app.bsky.feed.post", // The type of content that's being being posted
                                 ["facets"] = new JArray
                                 {
                                     new JObject
@@ -91,8 +91,8 @@ public class CPHInline
                                         {
                                             new JObject
                                             {
-                                                ["$type"] = "app.bsky.richtext.facet#link", // Added $type here
-                                                ["uri"] = "https://" + channelUrl // Ensure the URI is complete
+                                                ["$type"] = "app.bsky.richtext.facet#link", // Sets the object as a facet link that matches the text to make it clickable
+                                                ["uri"] = "https://" + channelUrl // Makes sure the link matches the text
                                             }
                                         }
                                     }
@@ -100,6 +100,7 @@ public class CPHInline
                             }
                         };
 
+                        // Post go brrr and various error checking
                         string postPayloadJson = postPayload.ToString();
 
                         HttpRequestMessage postRequest = new HttpRequestMessage(HttpMethod.Post, BlueSkyCreatePostEndpoint);
