@@ -24,7 +24,7 @@ public class CPHInline
         CPH.TryGetArg("bskyAppPass", out string bskyAppPass);
         string channelUrl = "twitch.tv/" + twitchUser;
 
-        string BlueSkyHandle = bskyHandle + ".bsky.social";
+        string BlueSkyHandle = bskyHandle;
         string ResolveIdEndpoint = "https://bsky.social/xrpc/com.atproto.identity.resolveHandle";
         string BlueSkyAppPass = bskyAppPass;
         string BlueSkyGetTokenEndpoint = "https://bsky.social/xrpc/com.atproto.server.createSession";
